@@ -192,7 +192,9 @@ app.post("/webhook/register", requireSecret, async (req, res) => {
       return res.status(500).json({ error: "EFI_PIX_KEY not set" });
     const token = await getToken();
     const proto = req.headers["x-forwarded-proto"] || req.protocol;
-    const webhookUrl = `${proto}://${req.get("host")}/webhook/efi`;
+    // Sufixo "?ignorar=" + header "x-skip-mtls-checking" desativam a exigência
+    // de mTLS que a EFI faz por padrão na URL do webhook.
+    const webhookUrl = `${proto}://${req.get("host")}/webhook/efi?ignorar=`;
     const { data } = await api.put(
       `/v2/webhook/${encodeURIComponent(EFI_PIX_KEY)}`,
       { webhookUrl },
@@ -200,6 +202,7 @@ app.post("/webhook/register", requireSecret, async (req, res) => {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "x-skip-mtls-checking": "true",
         },
       },
     );
